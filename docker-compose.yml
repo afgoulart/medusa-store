@@ -1,0 +1,59 @@
+services:
+  medusa_postgres:
+    image: postgres
+    container_name: medusa_postgres
+    environment:
+      POSTGRES_PASSWORD: "pass1234"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./PostgreSQL:/var/lib/postgresql/data
+    networks:
+      - postgres-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: medusa_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@medusa-test.com"
+      PGADMIN_DEFAULT_PASSWORD: "An!78SbLVyTsc@G"
+    ports:
+      - "16543:80"
+    depends_on:
+      - medusa_postgres
+    networks:
+      - postgres-network
+
+  api:
+    image: node
+    container_name: api
+    working_dir: /application
+    volumes:
+      - ./my-medusa-store:/application
+    ports:
+      - 7001:7001
+    command:
+      - npm dev
+    depends_on:
+      - medusa_postgres
+    networks:
+      - postgres-network
+
+  front:
+    image: node
+    container_name: front
+    working_dir: /application
+    volumes:
+      - ./my-medusa-store-storefront:/application
+    ports:
+      - "8000:8000"
+    command:
+      - npm dev
+    depends_on:
+      - api
+    networks:
+      - postgres-network
+
+networks:
+  postgres-network:
+    driver: bridge
